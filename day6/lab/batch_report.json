@@ -1,0 +1,183 @@
+{
+  "directory": "queries/",
+  "reviewed_at": "2026-05-25T16:28:50.396477",
+  "files_reviewed": 5,
+  "total_issues": 15,
+  "files": [
+    {
+      "file": "queries/my_query.sql",
+      "reviewed_at": "2026-05-25T16:28:23.075363",
+      "issues_found": 3,
+      "review": {
+        "issues": [
+          {
+            "severity": "Critical",
+            "category": "Correctness",
+            "title": "Incorrect table and column names",
+            "line": "select ***gh from my_table m leeeft join my_table2 t where m.id = t.id and m.value > 100;",
+            "problem": "The query uses incorrect table and column names that do not match the provided schema.",
+            "fix": "select t1.transaction_id, t2.merchant_name from sigma_analytics.fact_transactions t1 left join sigma_analytics.dim_merchant t2 on t1.merchant_id = t2.merchant_id where t1.amount > 100;"
+          },
+          {
+            "severity": "Medium",
+            "category": "Readability",
+            "title": "Poor readability due to incorrect table and column names",
+            "line": "select ***gh from my_table m leeeft join my_table2 t where m.id = t.id and m.value > 100;",
+            "problem": "The query uses incorrect table and column names, making it difficult to understand.",
+            "fix": "select t1.transaction_id, t2.merchant_name from sigma_analytics.fact_transactions t1 left join sigma_analytics.dim_merchant t2 on t1.merchant_id = t2.merchant_id where t1.amount > 100;"
+          },
+          {
+            "severity": "Low",
+            "category": "Readability",
+            "title": "Typo in SQL keyword",
+            "line": "select ***gh from my_table m leeeft join my_table2 t where m.id = t.id and m.value > 100;",
+            "problem": "The keyword 'leeeft' contains a typo.",
+            "fix": "select t1.transaction_id, t2.merchant_name from sigma_analytics.fact_transactions t1 left join sigma_analytics.dim_merchant t2 on t1.merchant_id = t2.merchant_id where t1.amount > 100;"
+          }
+        ],
+        "corrected_sql": "select t1.transaction_id, t2.merchant_name from sigma_analytics.fact_transactions t1 left join sigma_analytics.dim_merchant t2 on t1.merchant_id = t2.merchant_id where t1.amount > 100;",
+        "summary": "The query had incorrect table and column names, a typo in the SQL keyword, and poor readability. The corrected query uses the correct table and column names and improves readability."
+      }
+    },
+    {
+      "file": "queries/my_query1.sql",
+      "reviewed_at": "2026-05-25T16:28:33.316159",
+      "issues_found": 3,
+      "review": {
+        "issues": [
+          {
+            "severity": "Critical",
+            "category": "Correctness",
+            "title": "Incorrect table names",
+            "line": "1",
+            "problem": "The query uses 'users' and 'orders' instead of the correct table names 'sigma_analytics.dim_customer' and 'sigma_analytics.fact_transactions'.",
+            "fix": "SELECT c.customer_name, c.email, t.transaction_id\nFROM sigma_analytics.dim_customer c, sigma_analytics.fact_transactions t\nWHERE c.customer_id = t.customer_id\nAND t.amount > (\n    SELECT AVG(amount)\n    FROM sigma_analytics.fact_transactions\n    WHERE customer_id = c.customer_id\n);"
+          },
+          {
+            "severity": "Medium",
+            "category": "Performance",
+            "title": "Correlated subquery",
+            "line": "4",
+            "problem": "The correlated subquery can be inefficient as it runs for each row in the outer query.",
+            "fix": "SELECT c.customer_name, c.email, t.transaction_id\nFROM sigma_analytics.dim_customer c\nJOIN (\n    SELECT customer_id, AVG(amount) as avg_amount\n    FROM sigma_analytics.fact_transactions\n    GROUP BY customer_id\n) avg_orders ON c.customer_id = avg_orders.customer_id\nJOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id\nWHERE t.amount > avg_orders.avg_amount;"
+          },
+          {
+            "severity": "Low",
+            "category": "Readability",
+            "title": "Lack of table aliases",
+            "line": "1",
+            "problem": "Using table aliases would make the query more readable.",
+            "fix": "SELECT c.customer_name, c.email, t.transaction_id\nFROM sigma_analytics.dim_customer c\nJOIN (\n    SELECT customer_id, AVG(amount) as avg_amount\n    FROM sigma_analytics.fact_transactions\n    GROUP BY customer_id\n) avg_orders ON c.customer_id = avg_orders.customer_id\nJOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id\nWHERE t.amount > avg_orders.avg_amount;"
+          }
+        ],
+        "corrected_sql": "SELECT c.customer_name, c.email, t.transaction_id\nFROM sigma_analytics.dim_customer c\nJOIN (\n    SELECT customer_id, AVG(amount) as avg_amount\n    FROM sigma_analytics.fact_transactions\n    GROUP BY customer_id\n) avg_orders ON c.customer_id = avg_orders.customer_id\nJOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id\nWHERE t.amount > avg_orders.avg_amount;",
+        "summary": "The query had issues with incorrect table names, a correlated subquery affecting performance, and lack of readability due to missing table aliases."
+      }
+    },
+    {
+      "file": "queries/my_query2.sql",
+      "reviewed_at": "2026-05-25T16:28:39.167204",
+      "issues_found": 3,
+      "review": {
+        "issues": [
+          {
+            "severity": "Critical",
+            "category": "Correctness",
+            "title": "Invalid table reference",
+            "line": "1",
+            "problem": "The query references a table 'users' which does not exist in the provided schema.",
+            "fix": "Replace 'users' with the appropriate table from the schema, e.g., 'sigma_analytics.fact_transactions'."
+          },
+          {
+            "severity": "Critical",
+            "category": "Correctness",
+            "title": "Incorrect WHERE clause",
+            "line": "1",
+            "problem": "The 'WHERE' clause is incorrectly placed and uses a non-existent column 'age'.",
+            "fix": "Remove the 'WHERE' clause or replace it with a valid condition from the schema."
+          },
+          {
+            "severity": "Medium",
+            "category": "Readability",
+            "title": "Lack of comments",
+            "line": "N/A",
+            "problem": "The query lacks comments explaining the logic, making it difficult to understand.",
+            "fix": "Add comments to explain the purpose and logic of the query."
+          }
+        ],
+        "corrected_sql": "SELECT ft.transaction_id, ft.amount, ft.status, ft.merchant_id, ft.customer_id, ft.transaction_date, ft.payment_method, dm.merchant_name, dc.customer_name, dc.email, dc.tier, dc.signup_date, dc.city FROM sigma_analytics.fact_transactions ft JOIN sigma_analytics.dim_merchant dm ON ft.merchant_id = dm.merchant_id JOIN sigma_analytics.dim_customer dc ON ft.customer_id = dc.customer_id WHERE ft.status = 'COMPLETED';",
+        "summary": "The query had critical issues with table references and WHERE clause logic, and lacked readability due to missing comments."
+      }
+    },
+    {
+      "file": "queries/my_query3.sql",
+      "reviewed_at": "2026-05-25T16:28:45.510994",
+      "issues_found": 3,
+      "review": {
+        "issues": [
+          {
+            "severity": "Critical",
+            "category": "Correctness",
+            "title": "Cross Join Without Join Condition",
+            "line": "1",
+            "problem": "The query performs a cross join between 'customers' and 'orders' tables without a proper join condition, resulting in a Cartesian product.",
+            "fix": "SELECT c.customer_name, t.transaction_date FROM sigma_analytics.dim_customer c JOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id"
+          },
+          {
+            "severity": "Medium",
+            "category": "Readability",
+            "title": "Ambiguous Table Aliases",
+            "line": "1",
+            "problem": "The table aliases 'customers' and 'orders' are not descriptive. It's unclear which tables they refer to.",
+            "fix": "SELECT c.customer_name, t.transaction_date FROM sigma_analytics.dim_customer c JOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id"
+          },
+          {
+            "severity": "Medium",
+            "category": "Readability",
+            "title": "Lack of Comments",
+            "line": "1",
+            "problem": "The query lacks comments explaining its purpose or logic.",
+            "fix": "SELECT c.customer_name, t.transaction_date FROM sigma_analytics.dim_customer c JOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id -- Join customers with their transactions"
+          }
+        ],
+        "corrected_sql": "SELECT c.customer_name, t.transaction_date FROM sigma_analytics.dim_customer c JOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id -- Join customers with their transactions",
+        "summary": "The query had a critical correctness issue due to a cross join without a condition. It also lacked readability due to ambiguous aliases and missing comments."
+      }
+    },
+    {
+      "file": "queries/my_query4.sql",
+      "reviewed_at": "2026-05-25T16:28:50.394583",
+      "issues_found": 3,
+      "review": {
+        "issues": [
+          {
+            "severity": "Critical",
+            "category": "Correctness",
+            "title": "Incorrect table reference",
+            "line": "1",
+            "problem": "The query references a table 'students' which does not exist in the provided schema.",
+            "fix": "SELECT merchant_name FROM sigma_analytics.dim_merchant LIMIT 5;"
+          },
+          {
+            "severity": "Medium",
+            "category": "Correctness",
+            "title": "Missing ORDER BY clause",
+            "line": "1",
+            "problem": "Without an 'ORDER BY' clause, the database does not guarantee which 5 records are returned; the results could change every time you run it.",
+            "fix": "SELECT merchant_name FROM sigma_analytics.dim_merchant ORDER BY merchant_name LIMIT 5;"
+          },
+          {
+            "severity": "Low",
+            "category": "Readability",
+            "title": "Ambiguous column alias",
+            "line": "1",
+            "problem": "The column alias 'name' is ambiguous and does not match the schema.",
+            "fix": "SELECT merchant_name FROM sigma_analytics.dim_merchant LIMIT 5;"
+          }
+        ],
+        "corrected_sql": "SELECT merchant_name FROM sigma_analytics.dim_merchant ORDER BY merchant_name LIMIT 5;",
+        "summary": "The query had incorrect table references, lacked an ORDER BY clause, and used an ambiguous column alias."
+      }
+    }
+  ]
+}

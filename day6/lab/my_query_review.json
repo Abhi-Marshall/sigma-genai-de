@@ -1,0 +1,35 @@
+{
+  "file": "queries/my_query.sql",
+  "reviewed_at": "2026-05-25T16:28:23.075363",
+  "issues_found": 3,
+  "review": {
+    "issues": [
+      {
+        "severity": "Critical",
+        "category": "Correctness",
+        "title": "Incorrect table and column names",
+        "line": "select ***gh from my_table m leeeft join my_table2 t where m.id = t.id and m.value > 100;",
+        "problem": "The query uses incorrect table and column names that do not match the provided schema.",
+        "fix": "select t1.transaction_id, t2.merchant_name from sigma_analytics.fact_transactions t1 left join sigma_analytics.dim_merchant t2 on t1.merchant_id = t2.merchant_id where t1.amount > 100;"
+      },
+      {
+        "severity": "Medium",
+        "category": "Readability",
+        "title": "Poor readability due to incorrect table and column names",
+        "line": "select ***gh from my_table m leeeft join my_table2 t where m.id = t.id and m.value > 100;",
+        "problem": "The query uses incorrect table and column names, making it difficult to understand.",
+        "fix": "select t1.transaction_id, t2.merchant_name from sigma_analytics.fact_transactions t1 left join sigma_analytics.dim_merchant t2 on t1.merchant_id = t2.merchant_id where t1.amount > 100;"
+      },
+      {
+        "severity": "Low",
+        "category": "Readability",
+        "title": "Typo in SQL keyword",
+        "line": "select ***gh from my_table m leeeft join my_table2 t where m.id = t.id and m.value > 100;",
+        "problem": "The keyword 'leeeft' contains a typo.",
+        "fix": "select t1.transaction_id, t2.merchant_name from sigma_analytics.fact_transactions t1 left join sigma_analytics.dim_merchant t2 on t1.merchant_id = t2.merchant_id where t1.amount > 100;"
+      }
+    ],
+    "corrected_sql": "select t1.transaction_id, t2.merchant_name from sigma_analytics.fact_transactions t1 left join sigma_analytics.dim_merchant t2 on t1.merchant_id = t2.merchant_id where t1.amount > 100;",
+    "summary": "The query had incorrect table and column names, a typo in the SQL keyword, and poor readability. The corrected query uses the correct table and column names and improves readability."
+  }
+}

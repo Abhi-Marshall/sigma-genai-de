@@ -1,0 +1,35 @@
+{
+  "file": "queries/my_query4.sql",
+  "reviewed_at": "2026-05-25T16:28:50.394583",
+  "issues_found": 3,
+  "review": {
+    "issues": [
+      {
+        "severity": "Critical",
+        "category": "Correctness",
+        "title": "Incorrect table reference",
+        "line": "1",
+        "problem": "The query references a table 'students' which does not exist in the provided schema.",
+        "fix": "SELECT merchant_name FROM sigma_analytics.dim_merchant LIMIT 5;"
+      },
+      {
+        "severity": "Medium",
+        "category": "Correctness",
+        "title": "Missing ORDER BY clause",
+        "line": "1",
+        "problem": "Without an 'ORDER BY' clause, the database does not guarantee which 5 records are returned; the results could change every time you run it.",
+        "fix": "SELECT merchant_name FROM sigma_analytics.dim_merchant ORDER BY merchant_name LIMIT 5;"
+      },
+      {
+        "severity": "Low",
+        "category": "Readability",
+        "title": "Ambiguous column alias",
+        "line": "1",
+        "problem": "The column alias 'name' is ambiguous and does not match the schema.",
+        "fix": "SELECT merchant_name FROM sigma_analytics.dim_merchant LIMIT 5;"
+      }
+    ],
+    "corrected_sql": "SELECT merchant_name FROM sigma_analytics.dim_merchant ORDER BY merchant_name LIMIT 5;",
+    "summary": "The query had incorrect table references, lacked an ORDER BY clause, and used an ambiguous column alias."
+  }
+}

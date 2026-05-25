@@ -1,0 +1,35 @@
+{
+  "file": "queries/my_query2.sql",
+  "reviewed_at": "2026-05-25T16:28:39.167204",
+  "issues_found": 3,
+  "review": {
+    "issues": [
+      {
+        "severity": "Critical",
+        "category": "Correctness",
+        "title": "Invalid table reference",
+        "line": "1",
+        "problem": "The query references a table 'users' which does not exist in the provided schema.",
+        "fix": "Replace 'users' with the appropriate table from the schema, e.g., 'sigma_analytics.fact_transactions'."
+      },
+      {
+        "severity": "Critical",
+        "category": "Correctness",
+        "title": "Incorrect WHERE clause",
+        "line": "1",
+        "problem": "The 'WHERE' clause is incorrectly placed and uses a non-existent column 'age'.",
+        "fix": "Remove the 'WHERE' clause or replace it with a valid condition from the schema."
+      },
+      {
+        "severity": "Medium",
+        "category": "Readability",
+        "title": "Lack of comments",
+        "line": "N/A",
+        "problem": "The query lacks comments explaining the logic, making it difficult to understand.",
+        "fix": "Add comments to explain the purpose and logic of the query."
+      }
+    ],
+    "corrected_sql": "SELECT ft.transaction_id, ft.amount, ft.status, ft.merchant_id, ft.customer_id, ft.transaction_date, ft.payment_method, dm.merchant_name, dc.customer_name, dc.email, dc.tier, dc.signup_date, dc.city FROM sigma_analytics.fact_transactions ft JOIN sigma_analytics.dim_merchant dm ON ft.merchant_id = dm.merchant_id JOIN sigma_analytics.dim_customer dc ON ft.customer_id = dc.customer_id WHERE ft.status = 'COMPLETED';",
+    "summary": "The query had critical issues with table references and WHERE clause logic, and lacked readability due to missing comments."
+  }
+}

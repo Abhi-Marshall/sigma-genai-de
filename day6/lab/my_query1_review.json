@@ -1,0 +1,35 @@
+{
+  "file": "queries/my_query1.sql",
+  "reviewed_at": "2026-05-25T16:28:33.316159",
+  "issues_found": 3,
+  "review": {
+    "issues": [
+      {
+        "severity": "Critical",
+        "category": "Correctness",
+        "title": "Incorrect table names",
+        "line": "1",
+        "problem": "The query uses 'users' and 'orders' instead of the correct table names 'sigma_analytics.dim_customer' and 'sigma_analytics.fact_transactions'.",
+        "fix": "SELECT c.customer_name, c.email, t.transaction_id\nFROM sigma_analytics.dim_customer c, sigma_analytics.fact_transactions t\nWHERE c.customer_id = t.customer_id\nAND t.amount > (\n    SELECT AVG(amount)\n    FROM sigma_analytics.fact_transactions\n    WHERE customer_id = c.customer_id\n);"
+      },
+      {
+        "severity": "Medium",
+        "category": "Performance",
+        "title": "Correlated subquery",
+        "line": "4",
+        "problem": "The correlated subquery can be inefficient as it runs for each row in the outer query.",
+        "fix": "SELECT c.customer_name, c.email, t.transaction_id\nFROM sigma_analytics.dim_customer c\nJOIN (\n    SELECT customer_id, AVG(amount) as avg_amount\n    FROM sigma_analytics.fact_transactions\n    GROUP BY customer_id\n) avg_orders ON c.customer_id = avg_orders.customer_id\nJOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id\nWHERE t.amount > avg_orders.avg_amount;"
+      },
+      {
+        "severity": "Low",
+        "category": "Readability",
+        "title": "Lack of table aliases",
+        "line": "1",
+        "problem": "Using table aliases would make the query more readable.",
+        "fix": "SELECT c.customer_name, c.email, t.transaction_id\nFROM sigma_analytics.dim_customer c\nJOIN (\n    SELECT customer_id, AVG(amount) as avg_amount\n    FROM sigma_analytics.fact_transactions\n    GROUP BY customer_id\n) avg_orders ON c.customer_id = avg_orders.customer_id\nJOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id\nWHERE t.amount > avg_orders.avg_amount;"
+      }
+    ],
+    "corrected_sql": "SELECT c.customer_name, c.email, t.transaction_id\nFROM sigma_analytics.dim_customer c\nJOIN (\n    SELECT customer_id, AVG(amount) as avg_amount\n    FROM sigma_analytics.fact_transactions\n    GROUP BY customer_id\n) avg_orders ON c.customer_id = avg_orders.customer_id\nJOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id\nWHERE t.amount > avg_orders.avg_amount;",
+    "summary": "The query had issues with incorrect table names, a correlated subquery affecting performance, and lack of readability due to missing table aliases."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "file": "queries/my_query3.sql",
+  "reviewed_at": "2026-05-25T16:28:45.510994",
+  "issues_found": 3,
+  "review": {
+    "issues": [
+      {
+        "severity": "Critical",
+        "category": "Correctness",
+        "title": "Cross Join Without Join Condition",
+        "line": "1",
+        "problem": "The query performs a cross join between 'customers' and 'orders' tables without a proper join condition, resulting in a Cartesian product.",
+        "fix": "SELECT c.customer_name, t.transaction_date FROM sigma_analytics.dim_customer c JOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id"
+      },
+      {
+        "severity": "Medium",
+        "category": "Readability",
+        "title": "Ambiguous Table Aliases",
+        "line": "1",
+        "problem": "The table aliases 'customers' and 'orders' are not descriptive. It's unclear which tables they refer to.",
+        "fix": "SELECT c.customer_name, t.transaction_date FROM sigma_analytics.dim_customer c JOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id"
+      },
+      {
+        "severity": "Medium",
+        "category": "Readability",
+        "title": "Lack of Comments",
+        "line": "1",
+        "problem": "The query lacks comments explaining its purpose or logic.",
+        "fix": "SELECT c.customer_name, t.transaction_date FROM sigma_analytics.dim_customer c JOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id -- Join customers with their transactions"
+      }
+    ],
+    "corrected_sql": "SELECT c.customer_name, t.transaction_date FROM sigma_analytics.dim_customer c JOIN sigma_analytics.fact_transactions t ON c.customer_id = t.customer_id -- Join customers with their transactions",
+    "summary": "The query had a critical correctness issue due to a cross join without a condition. It also lacked readability due to ambiguous aliases and missing comments."
+  }
+}
