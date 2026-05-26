@@ -1,0 +1,58 @@
+SCENARIO	The product team wants to adjust transaction fee rates based on volume. Build a pipeline that reads yesterday's transactions, calculates `txn_volume_by_payment_method`, applies a fee rate lookup (Credit: 2%, Debit: 1.5%, UPI: 0%), calculates `effective_revenue` after fees, and writes a `fee_analysis` Gold table. (Hint : Calculate txn_volume_by_payment_method. Apply fee rates. Write fee_analysis Gold table. )	
+		
+PIPELINE SPEC — Fill every section below		
+OBJECTIVE	[ 1–2 sentences: what business problem does this solve? ]	
+→ Your answer	Build a daily batch pipeline that processes yesterday’s payment transactions, calculates transaction volume by payment method, applies dynamic fee rates, and generates a fee_analysis Gold table with net/effective revenue after fee deduction.	
+DATA SOURCES	[ Source name, format, approximate row count per day ]	
+→ Your answer	"Source Name                    Format           Approx Rows/Day      Description
+transactions_raw               Parquet          ~5 million/day            Payment transaction events from SigmaPay
+payment_fee_lookup        CSV / Delta    <10 rows                    Fee mapping table maintained by Finance
+calendar_dim                     Delta              ~3650 rows               Date dimension for partition"	
+BRONZE LAYER	[ Columns to ingest, metadata columns to add, partition strategy ]	
+→ Your answer	"Ingest all raw columns as strings — never cast at Bronze, ever. Add:
+         ingestion_timestamp = current_timestamp()
+         source_file         = input_file_name()
+         pipeline_run_id     = uuid4()
+Partition by date (ingestion date, not transaction date). This way reruns don't corrupt historical Bronze."	
+SILVER LAYER	[ Exact casts, filter conditions, dedup key, quality halt threshold ]	
+→ Your answer	"Casts:
+amount → DecimalType(18,4) — never float for money
+transaction_date → DateType
+transaction_id, merchant_id, customer_id → StringType
+
+Filters (applied in this order):
+
+Drop rows where transaction_id is null
+Drop rows where amount <= 0
+Keep only transaction_date = run_date - 1
+
+Dedup key: transaction_id, keep row with latest ingestion_timestamp.
+Quality halt threshold: if null transaction_id rate > 5%, raise exception and stop the pipeline."	
+GOLD LAYER	[ Table name, key columns, EXACT business rule formula ]	
+→ Your answer	"Table name: fee_analysis
+
+Fee rates (hardcoded as a broadcast DataFrame):
+           fee_rates = {""CREDIT_CARD"": 0.02, ""DEBIT_CARD"": 0.015, ""UPI"": 0.00}
+
+Exact formula:
+       gross_revenue = SUM(amount)  WHERE status = 'COMPLETED'
+       txn_volume_by_payment_method = COUNT(*)  GROUP BY payment_method
+       fee_amount  = gross_revenue * fee_rate
+       effective_revenue = gross_revenue * (1 - fee_rate)   
+
+Key columns: analysis_date, payment_method"	
+ERROR HANDLING	[ What happens if source file missing? What if quality check fails? ]	
+→ Your answer	"Source file missing :  Fail fast with FileNotFoundError, send alert, do NOT write empty Gold partition
+
+Quality check fails (>5% bad rows) :   Raise exception, halt pipeline, page on-call
+
+Unexpected payment method (e.g. ""WALLET"") :   Apply fee_rate = 0.0 as default, log a warning — 
+never silently drop revenue"	
+PERFORMANCE	[ Partitioning strategy, any joins needing broadcast hint or caching ]	
+→ Your answer	"Fee rate DataFrame is 3 rows — always broadcast() it, never shuffle for this join
+
+Silver is partitioned by transaction_date, so the filter transaction_date = yesterday is a 
+partition prune — fast
+
+Gold partitioned by analysis_date — each daily rerun only overwrites one partition
+No caching needed; this is a linear DAG with one join"	

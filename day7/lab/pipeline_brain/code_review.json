@@ -1,0 +1,114 @@
+{
+  "checkpoints": [
+    {
+      "id": 1,
+      "name": "IDEMPOTENCY",
+      "status": "PASS",
+      "evidence": "No violation found",
+      "finding": "All writes use 'overwrite' mode.",
+      "fix": "None required."
+    },
+    {
+      "id": 2,
+      "name": "ERROR_HANDLING",
+      "status": "PASS",
+      "evidence": "try:\n    build_merchant_performance(spark, f\"{silver_path}/date={run_date}\", f\"{gold_output_dir}/merchant_performance\", run_date)\n    build_customer_ltv(spark, f\"{silver_path}\", f\"{gold_output_dir}/customer_ltv\")\n    build_daily_summary(spark, f\"{silver_path}/date={run_date}\", f\"{gold_output_dir}/daily_summary\", run_date)\n\n    # Write run metadata to JSON\n    with open(f\"{gold_output_dir}/run_metadata.json\", \"w\") as f:\n        json.dump(run_metadata, f)\n\nexcept Exception as e:\n    run_metadata[\"status\"] = \"FAILURE\"\n    run_metadata[\"error\"] = str(e)\n    with open(f\"{gold_output_dir}/run_metadata.json\", \"w\") as f:\n        json.dump(run_metadata, f)\n    raise e",
+      "finding": "try/except blocks are present around pipeline stages.",
+      "fix": "None required."
+    },
+    {
+      "id": 3,
+      "name": "PARTITION_PRUNING",
+      "status": "PASS",
+      "evidence": "transactions_df = (spark.read.format(\"parquet\")\n                      .option(\"basePath\", bronze_path)\n                      .load(f\"{bronze_path}/{run_date}\"))",
+      "finding": "Partition pruning is applied using the run_date filter.",
+      "fix": "None required."
+    },
+    {
+      "id": 4,
+      "name": "ROW_COUNT_LOGGING",
+      "status": "PASS",
+      "evidence": "run_metadata[\"tables\"][\"merchant_performance\"] = merchant_performance_df.count()\n    run_metadata[\"row_counts\"][\"merchant_performance\"] = merchant_performance_df.count()",
+      "finding": "Row counts are logged in the run metadata.",
+      "fix": "None required."
+    },
+    {
+      "id": 5,
+      "name": "BUSINESS_RULES",
+      "status": "PASS",
+      "evidence": "merchant_performance_df = completed_txns.groupBy(\"merchant_id\", \"merchant_name\", \"category\", \"city\", \"date\") \\\n        .agg(\n            sum(col(\"amount\")).alias(\"total_revenue\"),\n            count(\"*\").alias(\"txn_count\"),\n            count(when(col(\"status\") == \"FAILED\", 1)).alias(\"failed_txn_count\"),\n            count(\"*\").alias(\"total_txn_count\")\n        )",
+      "finding": "Aggregations are filtered by status='COMPLETED'.",
+      "fix": "None required."
+    },
+    {
+      "id": 6,
+      "name": "NULL_HANDLING",
+      "status": "PASS",
+      "evidence": "transactions_df = transactions_df.filter((col(\"transaction_id\").isNotNull()) & (col(\"amount\") >= 0))",
+      "finding": "Null handling is present using.isNotNull().",
+      "fix": "None required."
+    },
+    {
+      "id": 7,
+      "name": "BROADCAST_HINT",
+      "status": "PASS",
+      "evidence": "transactions_df = transactions_df.join(broadcast(merchants_df), \n                                          transactions_df.merchant_id == merchants_df.merchant_id, \n                                          \"left_outer\")",
+      "finding": "Broadcast hint is used in the join operation.",
+      "fix": "None required."
+    },
+    {
+      "id": 8,
+      "name": "HARDCODED_PATHS",
+      "status": "FAIL",
+      "evidence": "with open(f\"{gold_output_dir}/run_metadata.json\", \"w\") as f:\n        json.dump(run_metadata, f)",
+      "finding": "Hardcoded path string found in the code.",
+      "fix": "Replace hardcoded paths with variables or configuration parameters."
+    },
+    {
+      "id": 9,
+      "name": "SCHEMA_VALIDATION",
+      "status": "WARN",
+      "evidence": "No schema validation found before transformations.",
+      "finding": "Transformations happen without prior schema checks.",
+      "fix": "Add schema validation before transformations."
+    },
+    {
+      "id": 10,
+      "name": "DEDUPLICATION",
+      "status": "PASS",
+      "evidence": "transactions_df = transactions_df.filter(col(\"row_number\") == 1).drop(\"rank\", \"row_number\")",
+      "finding": "Deduplication logic is present using.filter() and .drop().",
+      "fix": "None required."
+    },
+    {
+      "id": 11,
+      "name": "METADATA_OUTPUT",
+      "status": "PASS",
+      "evidence": "with open(f\"{gold_output_dir}/run_metadata.json\", \"w\") as f:\n        json.dump(run_metadata, f)",
+      "finding": "Metadata is written to a JSON file.",
+      "fix": "None required."
+    },
+    {
+      "id": 12,
+      "name": "IMPORTS",
+      "status": "PASS",
+      "evidence": "No wildcard imports found.",
+      "finding": "No violations found.",
+      "fix": "None required."
+    }
+  ],
+  "summary": {
+    "pass_count": 10,
+    "fail_count": 1,
+    "warn_count": 1,
+    "merge_recommendation": "APPROVE_WITH_CHANGES",
+    "top_3_fixes": [
+      "Replace hardcoded paths with variables or configuration parameters.",
+      "Add schema validation before transformations.",
+      "None"
+    ]
+  },
+  "reviewed_file": "pipeline_brain/generated_pipeline.py",
+  "reviewed_at": "2026-05-26T12:21:02.266009+00:00",
+  "model": "amazon.nova-pro-v1:0"
+}

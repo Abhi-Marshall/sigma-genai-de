@@ -1,0 +1,8 @@
+Fixed the student review issues from Module 5.
+
+Changes made:
+- Replaced hardcoded S3 paths with configurable constants and environment variables.
+- Added schema validation for Bronze input before transformations.
+- Fixed Silver deduplication logic using Window and row_number over transaction_id.
+- Added a dedicated metadata writer for run metadata JSON.
+- Cleaned up imports and removed invalid/unused mode() usage.
