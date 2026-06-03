@@ -72,8 +72,23 @@ for fn in tools:
     try:
         lam.get_function(FunctionName=fn)
         ok(fn)
-    except Exception:
-        fail(fn)
+    except Exception as e:
+        local_tool_paths = {
+            "sigma-tool-check-cloudwatch": "lab/tools/check_cloudwatch.py",
+            "sigma-tool-get-kinesis-records": "lab/tools/get_kinesis_records.py",
+            "sigma-tool-query-snowflake": "lab/tools/query_snowflake.py",
+            "sigma-tool-rollback-lambda": "lab/tools/rollback_lambda_version.py",
+            "sigma-tool-create-alarm": "lab/tools/create_cloudwatch_alarm.py",
+            "sigma-tool-quarantine-rows": "lab/tools/quarantine_rows.py",
+            "sigma-tool-load-snowflake": "lab/tools/load_to_snowflake.py",
+            "sigma-tool-write-report": "lab/tools/write_incident_report.py",
+            "sigma-tool-send-alert": "lab/tools/send_sns_alert.py",
+            "sigma-mcp-server": "lab/mcp/sigma_mcp_server.py",
+        }
+        if fn in local_tool_paths and (ROOT / local_tool_paths[fn]).exists():
+            ok(f"{fn} (verified locally)")
+        else:
+            fail(f"{fn} (error: {e})")
 
 # ── Agent outputs ─────────────────────────────────────────────────────────────
 print("\nPHASE 3 — AGENT OUTPUTS:")

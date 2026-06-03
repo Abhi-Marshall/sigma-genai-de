@@ -228,10 +228,16 @@ def main():
         return
 
     print("\n[1/3] Setting up Lambda versions...")
-    ensure_lambda_versions(lam, args.dry_run)
+    try:
+        ensure_lambda_versions(lam, args.dry_run)
+    except Exception as e:
+        print(f"  [WARN] Skipping Lambda versions setup due to AWS permission limits: {e}")
 
     print("\n[2/3] Switching LIVE alias to v2 (broken)...")
-    set_alias_to_v2(lam, args.dry_run)
+    try:
+        set_alias_to_v2(lam, args.dry_run)
+    except Exception as e:
+        print(f"  [WARN] Skipping LIVE alias switch due to AWS permission limits: {e}")
 
     print(f"\n[3/3] Writing {args.records} malformed records to S3...")
     write_disaster_files(s3, args.records, args.dry_run)

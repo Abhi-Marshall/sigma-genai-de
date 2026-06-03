@@ -33,7 +33,7 @@ cur.execute("""
         SUM(amount)      AS gmv_inr,
         MIN(_loaded_at)  AS first_loaded,
         MAX(_loaded_at)  AS last_loaded
-    FROM SIGMA.SILVER.TRANSACTIONS
+    FROM SIGMA_DE.PUBLIC.TRANSACTIONS
     WHERE _loaded_at >= DATEADD(hour, -12, CURRENT_TIMESTAMP())
     GROUP BY 1
     ORDER BY 1
@@ -61,7 +61,7 @@ print()
 # Show the most recent 3 records loaded
 cur.execute("""
     SELECT transaction_id, merchant_name, amount, transaction_date, _loaded_at
-    FROM SIGMA.SILVER.TRANSACTIONS
+    FROM SIGMA_DE.PUBLIC.TRANSACTIONS
     ORDER BY _loaded_at DESC
     LIMIT 3
 """)

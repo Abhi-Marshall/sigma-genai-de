@@ -73,12 +73,14 @@ def run_query(sql: str, warehouse: str, max_rows: int) -> dict:
 # ── Preset queries the agents commonly use ────────────────────────────────────
 
 def gmv_last_24h(region: str = None) -> dict:
-    sql = """
+    db = os.getenv("SNOWFLAKE_DATABASE", "SIGMA_DE")
+    schema = os.getenv("SNOWFLAKE_SCHEMA", "PUBLIC")
+    sql = f"""
     SELECT
         DATE_TRUNC('hour', transaction_date) AS hour,
         COUNT(*)                             AS tx_count,
         SUM(amount)                          AS gmv
-    FROM SIGMA.SILVER.TRANSACTIONS
+    FROM {db}.{schema}.TRANSACTIONS
     WHERE transaction_date >= DATEADD(hour, -24, CURRENT_TIMESTAMP())
     GROUP BY 1
     ORDER BY 1
@@ -87,18 +89,22 @@ def gmv_last_24h(region: str = None) -> dict:
 
 
 def row_count_since(ts: str) -> dict:
+    db = os.getenv("SNOWFLAKE_DATABASE", "SIGMA_DE")
+    schema = os.getenv("SNOWFLAKE_SCHEMA", "PUBLIC")
     sql = f"""
     SELECT COUNT(*) AS row_count, SUM(amount) AS gmv
-    FROM SIGMA.SILVER.TRANSACTIONS
+    FROM {db}.{schema}.TRANSACTIONS
     WHERE _loaded_at >= '{ts}'
     """
     return run_query(sql, None, 1)
 
 
 def check_duplicate(transaction_id: str) -> dict:
+    db = os.getenv("SNOWFLAKE_DATABASE", "SIGMA_DE")
+    schema = os.getenv("SNOWFLAKE_SCHEMA", "PUBLIC")
     sql = f"""
     SELECT COUNT(*) AS cnt
-    FROM SIGMA.SILVER.TRANSACTIONS
+    FROM {db}.{schema}.TRANSACTIONS
     WHERE transaction_id = '{transaction_id}'
     """
     return run_query(sql, None, 1)

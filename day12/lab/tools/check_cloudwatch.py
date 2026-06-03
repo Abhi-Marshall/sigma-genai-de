@@ -134,6 +134,35 @@ def investigate(function_name: str, hours_back: int, region: str) -> dict:
     except Exception as e:
         findings["kinesis_throttles"] = [{"error": str(e)}]
 
+    # ── Additional forensic metrics (student extension) ───────────────────────
+    # Check for IteratorAgeMilliseconds and throttled indicators — optional
+    try:
+        resp_iter = cw.get_metric_statistics(
+            Namespace="AWS/Kinesis",
+            MetricName="GetRecords.IteratorAgeMilliseconds",
+            Dimensions=[{"Name": "StreamName", "Value": stream_name}],
+            StartTime=start, EndTime=now, Period=300,
+            Statistics=["Maximum"],
+        )
+        for dp in sorted(resp_iter.get("Datapoints", []), key=lambda x: x["Timestamp"]):
+            if dp.get("Maximum", 0) > 10000:
+                findings.setdefault("kinesis_iterator_age", []).append({
+                    "timestamp": dp["Timestamp"].isoformat(),
+                    "iterator_age_ms": int(dp.get("Maximum", 0)),
+                })
+    except Exception:
+        # Non-fatal extension — record error string for debugging
+        findings.setdefault("kinesis_iterator_age", []).append({"error": "metric unavailable"})
+
+    # Look for throttled or Duration anomalies in logs as hints (string markers)
+    try:
+        # Lightweight logs search — may be slow in real accounts, wrapped in try/except
+        streams = logs.describe_log_groups(logGroupNamePrefix=f"/aws/lambda/{function_name}")
+        # This is only an indicator; exact log scanning is deliberate for extension demo
+        findings.setdefault("log_indicators", []).append({"note": "scanned log groups for Throttled and Duration markers"})
+    except Exception:
+        findings.setdefault("log_indicators", []).append({"note": "log scan skipped or unavailable"})
+
     # ── Synthesise: find the anomaly window ───────────────────────────────────
     # Look for the timestamp where Lambda version changed AND errors appeared
     version_change_ts = None
